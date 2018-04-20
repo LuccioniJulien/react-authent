@@ -32,9 +32,11 @@ export default StyleSheet.create({
 
 	rowL: { 
 		borderWidth: 1,
-		height: 8,
+		width:Dimensions.get('window').width -20,
+		borderRadius: 3,
+		margin: 3,
 		alignSelf: 'stretch',
-		borderColor: '#DF0101',
-		backgroundColor: '#DF0101'
+		borderColor: '#f4dc42',
+		backgroundColor: '#f4dc42'
  }
 })

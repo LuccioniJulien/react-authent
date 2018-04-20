@@ -9,6 +9,7 @@ export default class Scan extends Component {
     super()
     this.state = {
       hasCameraPermission: null,
+      alreadyScanned:false
     }
   }
 
@@ -37,9 +38,12 @@ export default class Scan extends Component {
   }
 
   _handleBarCodeRead = ({ type, data }) => {
-    const {state,goBack} = this.props.navigation
-    state.params.add(data)
-    goBack()
+    if(!this.state.alreadyScanned){
+      this.setState({alreadyScanned:true})
+      const {state,goBack} = this.props.navigation
+      state.params.add(data)
+      goBack()
+    }
   }
   
 }
