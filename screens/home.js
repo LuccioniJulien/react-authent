@@ -1,116 +1,153 @@
+import { Alert, Text, View, TouchableOpacity, Modal, ScrollView, AsyncStorage } from 'react-native'
 import React from 'react'
-import { Text, View, TouchableOpacity, Modal, ScrollView, AsyncStorage } from 'react-native'
 import styles from './styles'
+import { connect } from 'react-redux'
+import * as Animatable from 'react-native-animatable'
+import TOTP from '../lib/totp'
 
 console.disableYellowBox = true
 
-export default class Home extends React.Component {
+class Home extends React.Component {
+
 	constructor() {
 		super()
 		this.state = {
-			data: []
+			timer: null
 		}
 	}
 
-	componentWillMount(){
-		this._getItem()
+	componentDidMount(){
+		// console.log(`DO YOU KNOW DA WAE ? ${this.props.data.length == 0}`)
+		if(this.props.data.length  == 0){
+			this.intAnimId = setInterval(() => {
+				this.refs.view.bounce(800)
+			}, 2000)
+		}
+	}
+
+	componentDidUpdate() {
+		clearInterval(this.intAnimId)
+		if (!this.state.timer) {
+			this.intId = setInterval(() => {
+				this.setState({ timer: this.state.timer + 5000 })
+			}, 5000)
+		}
+		if(this.props.data.length  == 0){
+			this.intAnimId = setInterval(() => {
+				this.refs.view.bounce(800)
+			}, 2000)
+		}
+	}
+
+	componentWillUnmount() {
+		clearInterval(this.intAnimId)
+		clearInterval(this.intId)
 	}
 
 	render() {
 		const { navigate } = this.props.navigation
-		
-		let listComp = this._item()
-		// = this._item()
+		let listComp = this._item(this.props.data)
+			return (
+				<View style={styles.container}>
+					<ScrollView>{listComp}</ScrollView>
+					<Animatable.View style={{alignItems: 'center'}} ref="view">
+					<Text style={{ fontSize: 20 }}>{this.props.data.length  == 0 ? "Press Add and scan the QRCode" : ""}</Text>
+						<TouchableOpacity
+							style={[styles.button, styles.green]}
+							onPress={() =>
+								navigate('Scan')
+							}
+						>
+							<Text style={{ fontSize: 20 }}>Add</Text>
+						</TouchableOpacity>
+					</Animatable.View>
+					<TouchableOpacity
+						style={[styles.button, styles.red]}
+						onPress={() => {
+							this._clear()
+						}}
+					>
+						<Text style={{ fontSize: 20 }}>Clear</Text>
+					</TouchableOpacity>
+				</View>
+			)
+	}
 
-		return (
-			<View style={styles.container}>
-				<ScrollView>{listComp}</ScrollView>
-				<TouchableOpacity
-					style={[styles.button, styles.green]}
-					onPress={() =>
-						navigate('Scan', {
-							add: this._add
-						})
+	_clear = () => {
+		Alert.alert(
+			'Remove',
+			'Do you want to remove all item ?',
+			[
+				{ text: 'No', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+				{
+					text: 'Yes',
+					onPress: () => {
+						try {
+							AsyncStorage.removeItem('@MySuperStore:list').then(() => {
+								this.props.dispatch({ type: 'QR_CLEAR' })
+							})
+						} catch (error) {
+							alert('unable to remove')
+						}
 					}
-				>
-					<Text style={{ fontSize: 20 }}>Add</Text>
-				</TouchableOpacity>
-				<TouchableOpacity style={[styles.button, styles.red]} onPress={()=>{this._clear()}}>
-					<Text style={{ fontSize: 20 }}>Clear</Text>
-				</TouchableOpacity>
-				
-			</View>
+				}
+			],
+			{ cancelable: false }
 		)
 	}
-	
-	async _getItem(){
-		const value = await AsyncStorage.getItem('@MySuperStore:list')
-		const oui = JSON.parse(value)
 
-		console.log(oui)
-
-		if(oui){
-			this.setState(oui)
-			return
-		}
-		this.setState({data:[]})
-	}
-
-	async _setItem(value){
-		await AsyncStorage.setItem('@MySuperStore:list',JSON.stringify(value) )
-		this._getItem()
-	}
-
-	_add = data => {
-		const regex = /^otpauth:\/\/totp\/(.+)\?secret=(.+)&issuer=(.*)$/
-		let array = data.match(regex)
-
-		if(!array){
-			alert("Wrong qr Code")
-			return
-		}
-		
-		let label  = array[1]
-		let secret = array[2]
-		let issuer = array[3]
-		
-		for (const attribut of this.state.data) {
-				if(attribut.secret === secret){
-					alert("Already save da code ya know")
-					return
+	_clearOne = value => {
+		Alert.alert(
+			'Remove',
+			'Do you want to remove this item ?',
+			[
+				{ text: 'No', onPress: () => console.log('Cancel Pressed'), style: 'cancel' },
+				{
+					text: 'Yes',
+					onPress: () => {
+						try {
+							let data = [...this.props.data]
+							data.splice(value, 1)
+							AsyncStorage.setItem('@MySuperStore:list', JSON.stringify({ data: data })).then(() => {
+								this.props.dispatch({ type: 'QR_CLEAR_ONE', payload: { data } })
+							})
+						} catch (error) {
+							alert('unable to remove')
+						}
+					}
 				}
-		}
-		this._setItem({ data:[...this.state.data,{label,secret,issuer}]})
+			],
+			{ cancelable: false }
+		)
 	}
 
-	_clear = async () => {
-		await AsyncStorage.removeItem('@MySuperStore:list');
-		this._getItem()
-	}
+	_item = data => {
+		//  console.log(`datd :${this.state.data}`)
+		const lol = data.map((x, idx) => {
+			const token = new TOTP(x.secret, 5).generate()
 
-	_clearOne = (value) => {
-		let data = this.state.data
-		for (let index = 0; index < data.length; index++) {
-			if (data[index].secret===value)
-			{
-				data.splice(index,1)
-				this._setItem({data:data})
-				return
-			}
-		}
-	}
-
-	_item = () => {
-		console.log(`datd :${this.state.data}`)
-		const lol = this.state.data.map(x => {
 			return (
-				<TouchableOpacity style={styles.rowL} onPress={()=>{this._clearOne(x.secret)}}>
+				<TouchableOpacity
+					key={idx}
+					style={styles.rowL}
+					onLongPress={() => {
+						this._clearOne(idx)
+					}}
+				>
 					<Text>{x.label}</Text>
-					<Text>{x.secret}</Text>
+					<Text>{token}</Text>
 					<Text>{x.issuer}</Text>
 				</TouchableOpacity>
-			)})
-			return lol
+			)
+		})
+		return lol
 	}
-
 }
+
+mapStateToProps = state => {
+	return {
+		data: state.data
+	}
+}
+
+export default connect(mapStateToProps)(Home)

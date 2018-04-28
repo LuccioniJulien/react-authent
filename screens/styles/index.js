@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, Dimensions } from 'react-native'
+import { StyleSheet, Dimensions, Platform } from 'react-native'
 
 export default StyleSheet.create({
 	container: {
@@ -7,6 +7,13 @@ export default StyleSheet.create({
 		backgroundColor: '#fff',
 		alignItems: 'center'
 	},
+
+	containerBis: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
 	button: {
 		width: Dimensions.get('window').width - 20,
@@ -18,11 +25,11 @@ export default StyleSheet.create({
 	},
 
 	green: {
-		backgroundColor: '#33cc33'
+		backgroundColor: Platform.OS === 'ios' ? '#ff0000' : '#33cc33'
 	},
 
 	red: {
-		backgroundColor: '#ff0000'
+		backgroundColor: Platform.OS === 'ios' ? '#33cc33' : '#ff0000'
 	},
 
 	camera:{

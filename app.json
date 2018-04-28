@@ -1,5 +1,10 @@
 {
   "expo": {
-    "sdkVersion": "26.0.0"
+    "sdkVersion": "26.0.0",
+    "icon": "./assets/agg.png",
+    "splash": {
+      "image": "./assets/images.png",
+      "backgroundColor":"#ffffff"
+   }
   }
 }
