@@ -53,7 +53,7 @@ class Scan extends Component {
 				if (attribut.secret === secret) {
 					this.setState({ alreadyScanned: false })
 					const { goBack } = this.props.navigation
-					alert('Already save da code ya know')
+					alert('QRCode Already saved')
 					goBack()
 					return
 				}
